@@ -21,6 +21,9 @@ import static dev.hegel.Generators.longs;
 import static dev.hegel.Generators.maps;
 import static dev.hegel.Generators.oneOf;
 import static dev.hegel.Generators.optional;
+import static dev.hegel.Generators.optionalDoubles;
+import static dev.hegel.Generators.optionalInts;
+import static dev.hegel.Generators.optionalLongs;
 import static dev.hegel.Generators.sampledFrom;
 import static dev.hegel.Generators.sets;
 import static dev.hegel.Generators.text;
@@ -43,6 +46,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
@@ -168,6 +173,25 @@ class ConformanceTest {
     void optionalBasicAndNonBasic() {
         assertAllExamples(optional(integers().min(0).max(3)), o -> o.isEmpty() || (o.get() >= 0 && o.get() <= 3));
         assertAllExamples(optional(integers().min(0).max(9).filter(x -> x > 4)), o -> o.isEmpty() || o.get() > 4);
+    }
+
+    @Test
+    void primitiveOptionals() {
+        assertAllExamples(
+                optionalInts(integers().min(0).max(3)), o -> o.isEmpty() || (o.getAsInt() >= 0 && o.getAsInt() <= 3));
+        assertAllExamples(
+                optionalLongs(longs().min(10L).max(20L)),
+                o -> o.isEmpty() || (o.getAsLong() >= 10L && o.getAsLong() <= 20L));
+        assertAllExamples(
+                optionalDoubles(doubles().min(0.0).max(1.0)),
+                o -> o.isEmpty() || (o.getAsDouble() >= 0.0 && o.getAsDouble() <= 1.0));
+        // Empty is the simplest value, so it is what an unconstrained search shrinks to.
+        assertTrue(minimal(optionalInts(integers()), o -> true).isEmpty());
+        assertEquals(
+                5L,
+                minimal(optionalLongs(longs().min(5L)), OptionalLong::isPresent).getAsLong());
+        assertTrue(
+                findAny(optionalDoubles(doubles()), OptionalDouble::isPresent).isPresent());
     }
 
     @Test
